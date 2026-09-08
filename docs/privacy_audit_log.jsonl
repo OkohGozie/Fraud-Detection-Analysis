@@ -1,0 +1,4 @@
+{"timestamp": "2026-09-07T10:49:09.390604+00:00", "user": "pipeline_service_account", "action": "READ_RAW_DATA", "function": "ingest", "status": "success", "rows_affected": 20040}
+{"timestamp": "2026-09-07T10:49:09.479452+00:00", "user": "pipeline_service_account", "action": "TRANSFORM_CLEAN", "function": "clean", "status": "success", "rows_affected": 20000}
+{"timestamp": "2026-09-07T10:49:09.526797+00:00", "user": "pipeline_service_account", "action": "TRANSFORM_FEATURE_ENGINEER", "function": "transform", "status": "success", "rows_affected": 20000}
+{"timestamp": "2026-09-07T10:49:09.540325+00:00", "user": "pipeline_service_account", "action": "TRANSFORM_SCHEMA_ALIGN", "function": "integrate", "status": "success", "rows_affected": 20000}

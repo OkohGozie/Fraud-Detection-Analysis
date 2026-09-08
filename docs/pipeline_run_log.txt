@@ -1,0 +1,13 @@
+10:48:18.551 | INFO    | prefect - Starting temporary server on http://127.0.0.1:8891
+See https://docs.prefect.io/v3/concepts/server#how-to-guides for more information on running a dedicated Prefect server.
+10:48:26.787 | INFO    | Flow run 'silky-goldfish' - Beginning flow run 'silky-goldfish' for flow 'fraud-detection-etl-pipeline'
+10:48:27.126 | INFO    | Task run 'ingest_data-36f' - Finished in state Completed()
+10:48:27.210 | INFO    | Task run 'clean_data-796' - Finished in state Completed()
+10:48:27.258 | INFO    | Task run 'transform_data-8fb' - Finished in state Completed()
+10:48:27.293 | INFO    | Task run 'integrate_data-f0e' - Finished in state Completed()
+10:48:27.318 | INFO    | great_expectations.data_context.types.base - Created temporary directory '/tmp/tmpfgi1fk7r' for ephemeral docs site
+10:48:27.414 | INFO    | Task run 'validate_data-8f8' - Finished in state Completed()
+10:48:28.320 | INFO    | Task run 'save_data-b4f' - Finished in state Completed()
+10:48:28.325 | INFO    | Flow run 'silky-goldfish' - Pipeline complete: 20000 rows ready for modeling (Module 3 -> Module 4 handoff)
+10:48:28.830 | INFO    | Flow run 'silky-goldfish' - Finished in state Completed()
+10:48:28.846 | INFO    | prefect - Stopping temporary server on http://127.0.0.1:8891
