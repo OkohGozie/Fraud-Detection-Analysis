@@ -17,17 +17,20 @@ import joblib
 import plotly.graph_objects as go
 import plotly.express as px
 
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 st.set_page_config(page_title="Fraud Detection Insights", page_icon="🔍", layout="wide")
 
 # ---------- Load model artifacts ----------
 @st.cache_resource
 def load_artifacts():
-    model = joblib.load("best_model.joblib")
-    feature_cols = joblib.load("feature_cols.joblib")
-    X_test = joblib.load("X_test.joblib")
-    y_test = joblib.load("y_test.joblib")
-    fairness = pd.read_csv("fairness_summary.csv", index_col=0).squeeze()
-    shap_importance = pd.read_csv("shap_feature_importance.csv")
+    model = joblib.load(os.path.join(BASE_DIR, "best_model.joblib"))
+    feature_cols = joblib.load(os.path.join(BASE_DIR, "feature_cols.joblib"))
+    X_test = joblib.load(os.path.join(BASE_DIR, "X_test.joblib"))
+    y_test = joblib.load(os.path.join(BASE_DIR, "y_test.joblib"))
+    fairness = pd.read_csv(os.path.join(BASE_DIR, "fairness_summary.csv"), index_col=0).squeeze()
+    shap_importance = pd.read_csv(os.path.join(BASE_DIR, "shap_feature_importance.csv"))
     return model, feature_cols, X_test, y_test, fairness, shap_importance
 
 model, feature_cols, X_test, y_test, fairness, shap_importance = load_artifacts()
