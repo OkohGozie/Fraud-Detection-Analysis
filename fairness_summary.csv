@@ -1,0 +1,6 @@
+,0
+demographic_parity_difference,0.013553476706153507
+equalized_odds_difference,0.19999999999999996
+disparate_impact_ratio,0.07836358398156151
+flag_raised,True
+grouping_variable,amount_band (PROXY — no demographic data available)
