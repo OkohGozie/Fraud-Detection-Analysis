@@ -1,0 +1,114 @@
+name: Fraud Detection CI/CD
+
+# Runs automated tests and validation on every push, and on pull requests
+# targeting main. This is the "close the seam" component the Final Project
+# calls for: without this, a change to etl.py could silently break
+# validate.py or the model's expected feature schema, and no one would
+# know until the API failed in production.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-pipeline:
+    name: Data Pipeline Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pipeline dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run unit tests (etl.py)
+        run: pytest tests/test_etl.py -v
+
+      - name: Run pipeline end-to-end (generates processed dataset)
+        run: python dags/fraud_pipeline_flow.py
+
+      - name: Run Great Expectations validation suite
+        run: python src/pipeline/validate.py
+
+      - name: Run bias detection suite
+        run: python src/pipeline/bias_detection.py
+
+  test-model-api:
+    name: Model & API Smoke Test
+    runs-on: ubuntu-latest
+    needs: test-pipeline
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install model dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify serialized model loads and predicts
+        run: |
+          python -c "
+          import joblib
+          model = joblib.load('artifacts/best_model.joblib')
+          feature_cols = joblib.load('artifacts/feature_cols.joblib')
+          X_test = joblib.load('artifacts/X_test.joblib')
+          preds = model.predict(X_test[:5])
+          print('Model loaded and produced predictions:', preds)
+          "
+
+      - name: Run FastAPI smoke test
+        run: |
+          python -c "
+          from fastapi.testclient import TestClient
+          from api.main import app
+          client = TestClient(app)
+          r = client.get('/health')
+          assert r.status_code == 200, 'Health check failed'
+          print('API health check passed:', r.json())
+          "
+
+  drift-monitoring-check:
+    name: Drift Monitoring Smoke Test
+    runs-on: ubuntu-latest
+    needs: test-model-api
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install monitoring dependencies
+        run: pip install evidently pandas joblib
+
+      - name: Run drift report and check for unexpected drift
+        run: |
+          python monitoring/monitoring.py
+          python -c "
+          import json
+          with open('monitoring/drift_summary.json') as f:
+              summary = json.load(f)
+          if summary['dataset_drift_detected']:
+              print('WARNING: dataset drift detected — flagging for manual review, not failing the build')
+          else:
+              print('No dataset drift detected in this run.')
+          "
+
+  notify-on-failure:
+    name: Notify on Pipeline Failure
+    runs-on: ubuntu-latest
+    needs: [test-pipeline, test-model-api, drift-monitoring-check]
+    if: failure()
+    steps:
+      - name: Log failure for manual follow-up
+        run: echo "One or more CI stages failed — see Incident Response Plan (docs/incident_response_plan.md) for escalation steps."
