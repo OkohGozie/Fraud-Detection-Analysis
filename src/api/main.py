@@ -1,6 +1,7 @@
 """
 main.py — FastAPI application serving the fraud detection model.
-Run with: uvicorn api.main:app --reload --port 8000
+Location in repo: src/api/main.py
+Run with: uvicorn src.api.main:app --reload --port 8000
 Then POST to http://localhost:8000/predict
 """
 
@@ -11,7 +12,9 @@ import numpy as np
 import pandas as pd
 from pathlib import Path
 
-ARTIFACT_DIR = Path(__file__).resolve().parent.parent / "artifacts"
+# This file lives at src/api/main.py, so going up two levels reaches the
+# repo root, where the "models" folder actually lives.
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 
 app = FastAPI(
     title="Fraud Detection API",
@@ -22,15 +25,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-model = joblib.load(ARTIFACT_DIR / "best_model.joblib")
-feature_cols = joblib.load(ARTIFACT_DIR / "feature_cols.joblib")
-importance_df = pd.read_csv(ARTIFACT_DIR / "shap_feature_importance.csv")
+model = joblib.load(MODELS_DIR / "best_model.joblib")
+feature_cols = joblib.load(MODELS_DIR / "feature_cols.joblib")
+importance_df = pd.read_csv(MODELS_DIR / "shap_feature_importance.csv")
 TOP_FEATURES = importance_df.head(5)["feature"].tolist()
 
 
 class Transaction(BaseModel):
-    # V1-V28 anonymized PCA features; Amount and engineered features.
-    # Example values below reflect a typical legitimate transaction.
     V1: float = 0.0; V2: float = 0.0; V3: float = 0.0; V4: float = 0.0
     V5: float = 0.0; V6: float = 0.0; V7: float = 0.0; V8: float = 0.0
     V9: float = 0.0; V10: float = 0.0; V11: float = 0.0; V12: float = 0.0
@@ -72,8 +73,6 @@ def predict(transaction: Transaction):
         proba = float(model.predict_proba(row)[0][1])
         pred_class = "fraud" if proba >= 0.5 else "legit"
 
-        # Prescriptive priority tier (Module 2, Section 3): weight by loss
-        # exposure, not probability alone.
         loss_exposure = proba * data["Amount"]
         if loss_exposure > 500:
             tier = "HIGH — investigate immediately"
