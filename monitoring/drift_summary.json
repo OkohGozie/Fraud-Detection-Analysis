@@ -1,0 +1,10 @@
+{
+  "reference_rows": 15000,
+  "current_rows": 5000,
+  "dataset_drift_detected": false,
+  "drifted_columns": [],
+  "total_metrics_computed": 33,
+  "monitoring_tool": "Evidently AI",
+  "monitored_windows": "train (reference) vs. held-out test (current) \u2014 pre-production smoke test",
+  "action_if_drift_detected": "Halt automated retraining trigger; route to Data Science Lead for manual review before promoting any new model version (see Model Registry, Section 4)."
+}

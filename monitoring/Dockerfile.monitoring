@@ -1,0 +1,11 @@
+# monitoring/Dockerfile.monitoring — Evidently AI drift monitoring container
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir evidently pandas joblib scikit-learn
+
+COPY monitoring/ ./monitoring/
+COPY models/best_model.joblib models/feature_cols.joblib ./models/
+
+CMD ["python", "monitoring/monitoring.py"]
