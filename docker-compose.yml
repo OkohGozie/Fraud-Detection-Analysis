@@ -21,7 +21,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: api/Dockerfile.api
+      dockerfile: Dockerfile.api
     container_name: fraud-api
     ports:
       - "8000:8000"
