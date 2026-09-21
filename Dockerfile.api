@@ -1,57 +1,16 @@
-# docker-compose.yml — Multi-container deployment
-# Three services: pipeline (ETL), api (FastAPI /predict), monitoring (Evidently)
-# Run with: docker compose up --build
+# api/Dockerfile.api — FastAPI /predict service container
+# Updated for Render deployment: listens on Render's dynamic $PORT
+FROM python:3.11-slim
 
-version: "3.9"
+WORKDIR /app
 
-services:
-  pipeline:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: fraud-pipeline
-    volumes:
-      - ./data:/app/data
-      - ./docs:/app/docs
-    environment:
-      - PYTHONUNBUFFERED=1
-    command: ["python", "dags/fraud_pipeline_flow.py"]
-    restart: "no"
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 
-  api:
-    build:
-      context: .
-      dockerfile: api/Dockerfile.api
-    container_name: fraud-api
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./models:/app/models:ro
-    environment:
-      - PYTHONUNBUFFERED=1
-    depends_on:
-      - pipeline
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-  monitoring:
-    build:
-      context: .
-      dockerfile: monitoring/Dockerfile.monitoring
-    container_name: fraud-monitoring
-    volumes:
-      - ./models:/app/models:ro
-      - ./monitoring:/app/monitoring
-    environment:
-      - PYTHONUNBUFFERED=1
-    depends_on:
-      - api
-    restart: unless-stopped
+COPY src/api/ ./src/api/
+COPY models/best_model.joblib models/feature_cols.joblib models/shap_feature_importance.csv ./models/
 
-networks:
-  default:
-    name: fraud-detection-network
+EXPOSE 8000
+CMD uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}
