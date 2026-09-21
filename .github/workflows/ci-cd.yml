@@ -1,11 +1,5 @@
 name: Fraud Detection CI/CD
 
-# Runs automated tests and validation on every push, and on pull requests
-# targeting main. This is the "close the seam" component the Final Project
-# calls for: without this, a change to etl.py could silently break
-# validate.py or the model's expected feature schema, and no one would
-# know until the API failed in production.
-
 on:
   push:
     branches: [main]
@@ -58,9 +52,9 @@ jobs:
         run: |
           python -c "
           import joblib
-          model = joblib.load('artifacts/best_model.joblib')
-          feature_cols = joblib.load('artifacts/feature_cols.joblib')
-          X_test = joblib.load('artifacts/X_test.joblib')
+          model = joblib.load('models/best_model.joblib')
+          feature_cols = joblib.load('models/feature_cols.joblib')
+          X_test = joblib.load('models/X_test.joblib')
           preds = model.predict(X_test[:5])
           print('Model loaded and produced predictions:', preds)
           "
@@ -69,7 +63,7 @@ jobs:
         run: |
           python -c "
           from fastapi.testclient import TestClient
-          from api.main import app
+          from src.api.main import app
           client = TestClient(app)
           r = client.get('/health')
           assert r.status_code == 200, 'Health check failed'
@@ -89,7 +83,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install monitoring dependencies
-        run: pip install evidently pandas joblib
+        run: pip install evidently pandas joblib scikit-learn
 
       - name: Run drift report and check for unexpected drift
         run: |
@@ -111,4 +105,4 @@ jobs:
     if: failure()
     steps:
       - name: Log failure for manual follow-up
-        run: echo "One or more CI stages failed — see Incident Response Plan (docs/incident_response_plan.md) for escalation steps."
+        run: echo "One or more CI stages failed — see Incident Response Plan (docs/Ethical_AI_Governance_Framework.md) for escalation steps."
